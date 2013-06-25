@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark" 
+               xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600"
+               applicationComplete="onApplicationComplete()">
+    <fx:Declarations>
+        <!-- Place non-visual elements (e.g., services, value objects) here -->
+    </fx:Declarations>
+    
+    <s:VGroup gap="10" width="100%" top="10" bottom="0" horizontalAlign="center">
+        <s:TextArea id="textArea" editable="false" width="400" height="200">
+        </s:TextArea>
+        <s:TextInput id="cirrusDevKey" width="200" prompt="Cirrus Dev Key...">
+        </s:TextInput>
+        <s:TextInput id="textInput" width="200" prompt="Enter Group ID...">
+        </s:TextInput>
+        <s:Button label="Connect..." click="connect()">
+        </s:Button>
+        <s:Button label="Publish Video..." click="publish()">
+        </s:Button>
+        <s:HGroup width="100%" id="videos" gap="100" left="50" right="50" >
+        </s:HGroup>
+    </s:VGroup>
+    
+    <fx:Script>
+        <![CDATA[
+            import com.github.maxwells.voip.VoipService;
+            import mx.core.UIComponent;
+            
+            var videoArray:Array = new Array();
+            var voipService:VoipService;
+            
+            protected function onApplicationComplete():void {
+                Trace("onApplicationComplete();");
+            }
+            
+            public function Trace(message:String):void {
+                textArea.text += message+"\n";
+                textArea.scroller.verticalScrollBar.value = textArea.scroller.verticalScrollBar.maximum;
+            }
+            
+            public function connect():void {
+                voipService = new VoipService("rtmfp://p2p.rtmfp.net/" + cirrusDevKey.text, textInput.text, Trace, addPlayNetStream, dropPlayNetStream);
+                voipService.connect()
+            }
+            
+            public function publish():void {
+                if (voipService.connected) {
+                    voipService.publish();
+                }
+            }
+            
+            public function addPlayNetStream(name:String, netStream:NetStream):void {
+                Trace("Adding new playNetStream: "+name);
+                videoArray[name] = new Array;
+                videoArray[name]['video'] = new Video;
+                videoArray[name]['video'].smoothing = true;
+                videoArray[name]['component'] = new UIComponent();
+                videoArray[name]['component'].id = name;
+                videoArray[name]['component'].width = 200;
+                videoArray[name]['component'].height = 200;
+                videos.addElement(videoArray[name]['component']);
+                videoArray[name]['component'].addChild(videoArray[name]['video']);
+                videoArray[name]['video'].attachNetStream(netStream);
+            }
+            
+            public function dropPlayNetStream(name:String):void {
+                videos.removeElement(videoArray[name]['component']);
+                videoArray[name] = null;
+            }
+            
+        ]]>
+    </fx:Script>
+    
+</s:Application>
