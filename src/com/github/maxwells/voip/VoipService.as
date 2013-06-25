@@ -13,6 +13,7 @@ package com.github.maxwells.voip
     public class VoipService
     {
         private var _server:String;
+        private var _username:String;
         private var _netConnection:NetConnection; 
         private var _groupSpecifierId:String;
         private var _groupSpecifier:GroupSpecifier;
@@ -29,10 +30,11 @@ package com.github.maxwells.voip
         
         public var connected:Boolean = false;
         
-        public function VoipService(server:String, groupSpecifierId:String, traceFunction:Function, addPlayNetStream:Function, dropPlayNetStream:Function)
+        public function VoipService(server:String, groupSpecifierId:String, username:String, traceFunction:Function, addPlayNetStream:Function, dropPlayNetStream:Function)
         {
             _server = server;
             _groupSpecifierId = groupSpecifierId;
+            _username = username;
             Trace = traceFunction;
             _addPlayNetStream = addPlayNetStream;
             _dropPlayNetStream = dropPlayNetStream;
@@ -63,7 +65,6 @@ package com.github.maxwells.voip
                 
                 // NetGroup
                 case 'NetGroup.Connect.Success':
-                    onConnectGroup();
                     break;
                 case 'NetGroup.Neighbor.Connect':
                     _neighbors++;
@@ -106,13 +107,14 @@ package com.github.maxwells.voip
         private function onConnect():void {
             connected = true;
             
-            var groupSpecifier:GroupSpecifier; 
             _groupSpecifier = new GroupSpecifier(_groupSpecifierId);
             _groupSpecifier.postingEnabled = true;
             _groupSpecifier.serverChannelEnabled = true;
             _groupSpecifier.multicastEnabled = true;
+            
             _netGroup = new NetGroup(_netConnection, _groupSpecifier.groupspecWithAuthorizations());
             _netGroup.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+            
             _netStream = new NetStream(_netConnection, _groupSpecifier.groupspecWithAuthorizations());
             _netStream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
             
@@ -122,12 +124,6 @@ package com.github.maxwells.voip
         private function onDisconnect():void {
             connected = false;
             Trace("onDisconnect();\n\nYou're done, son.");
-        }
-        
-        private function onConnectGroup():void {
-            var object:Object = new Object();
-            object.message = "Hey, you!";
-            _netGroup.sendToAllNeighbors(object);
         }
         
         private function onNetStreamConnect():void
@@ -140,30 +136,24 @@ package com.github.maxwells.voip
             _mic = Microphone.getMicrophone();
             _camera = Camera.getCamera();
             
-            if(_mic)
-            {
+            if(_mic) {
                 _mic.codec = SoundCodec.SPEEX;
                 _mic.setSilenceLevel(0);
                 
                 _netStream.attachAudio(_mic);
-                
-                Trace("got microphone\n");
-            }
-            var camera:Camera = Camera.getCamera();
-            if(camera)
-            {
-                camera.setMode(320, 240, 10);
-                camera.setQuality(30000, 0);
-                camera.setKeyFrameInterval(15);
-                
-                _netStream.attachCamera(camera);
-                
-                Trace("got camera\n");
             }
             
-            Trace("Publishing Stream: stream"+_neighbors);
+            if(_camera) {
+                _camera.setMode(320, 240, 10);
+                _camera.setQuality(30000, 0);
+                _camera.setKeyFrameInterval(15);
+                
+                _netStream.attachCamera(_camera);
+            }
             
-            _netStream.publish("stream"+_neighbors);
+            Trace("Publishing Stream: stream"+_username);
+            
+            _netStream.publish("stream"+_username);
         }
         
         private function onNeighborPublish(streamName:String):void {

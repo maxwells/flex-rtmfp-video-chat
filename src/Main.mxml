@@ -14,11 +14,13 @@
         </s:TextInput>
         <s:TextInput id="textInput" width="200" prompt="Enter Group ID...">
         </s:TextInput>
+        <s:TextInput id="username" width="200" prompt="Enter username..."> 
+        </s:TextInput>
         <s:Button label="Connect..." click="connect()">
         </s:Button>
         <s:Button label="Publish Video..." click="publish()">
         </s:Button>
-        <s:HGroup width="100%" id="videos" gap="100" left="50" right="50" >
+        <s:HGroup width="100%" id="videos" gap="100" horizontalAlign="center">
         </s:HGroup>
     </s:VGroup>
     
@@ -40,7 +42,7 @@
             }
             
             public function connect():void {
-                voipService = new VoipService("rtmfp://p2p.rtmfp.net/" + cirrusDevKey.text, textInput.text, Trace, addPlayNetStream, dropPlayNetStream);
+                voipService = new VoipService("rtmfp://p2p.rtmfp.net/" + cirrusDevKey.text, textInput.text, username.text, Trace, addPlayNetStream, dropPlayNetStream);
                 voipService.connect()
             }
             
