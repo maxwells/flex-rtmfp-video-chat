@@ -1,0 +1,24 @@
+<project name="Flex Ant Tasks Build Script" default="compile flex project">
+ 
+   <!-- load previously defined configuration properties file -->
+   <property file="build.properties" />
+                              
+   <!-- points to our flexTasks.jar we copied to the libs folder to distribute with the project -->
+   <taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar"/> 
+                              
+   <!-- delete and create the DEPLOY dir again -->
+   <target name="init">
+      <delete dir="${DEPLOY_DIR}" />
+      <mkdir dir="${DEPLOY_DIR}" />       
+   </target>
+                              
+   <!-- Build and output the Main.swf-->
+   <target name="compile flex project" depends="init">
+      <mxmlc file="${SRC_DIR}/Main.mxml" output="${DEPLOY_DIR}/Main.swf">
+         <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+         <source-path path-element="${FLEX_HOME}/frameworks"/>
+         <compiler.debug>false</compiler.debug>             
+      </mxmlc>
+   </target>
+ 
+</project>

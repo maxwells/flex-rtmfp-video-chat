@@ -26,34 +26,38 @@
     
     <fx:Script>
         <![CDATA[
-            import com.github.maxwells.voip.VoipService;
+            import com.github.maxwells.rtmfp.RtmfpService;
             import mx.core.UIComponent;
             
-            var videoArray:Array = new Array();
-            var voipService:VoipService;
+            private var videoArray:Array = new Array();
+            private var rtmfpService:RtmfpService;
             
             protected function onApplicationComplete():void {
                 Trace("onApplicationComplete();");
             }
             
+            // Print stuff to screen
             public function Trace(message:String):void {
                 textArea.text += message+"\n";
                 textArea.scroller.verticalScrollBar.value = textArea.scroller.verticalScrollBar.maximum;
             }
             
+            // Create new RtmfpService and connect to it
             public function connect():void {
-                voipService = new VoipService("rtmfp://p2p.rtmfp.net/" + cirrusDevKey.text, textInput.text, username.text, Trace, addPlayNetStream, dropPlayNetStream);
-                voipService.connect()
+                rtmfpService = new RtmfpService("rtmfp://p2p.rtmfp.net/" + cirrusDevKey.text, textInput.text, username.text, Trace, addPlayNetStream, dropPlayNetStream);
+                rtmfpService.connect()
             }
             
+            // publish audio/video to peers
             public function publish():void {
-                if (voipService.connected) {
-                    voipService.publish();
+                if (rtmfpService.connected) {
+                    rtmfpService.publish();
                 }
             }
             
+            // Adds a streaming video element to the videos HGroup
             public function addPlayNetStream(name:String, netStream:NetStream):void {
-                Trace("Adding new playNetStream: "+name);
+                Trace("Adding new play NetStream video container: "+name);
                 videoArray[name] = new Array;
                 videoArray[name]['video'] = new Video;
                 videoArray[name]['video'].smoothing = true;
@@ -66,7 +70,10 @@
                 videoArray[name]['video'].attachNetStream(netStream);
             }
             
+            // Cleanup: removes streaming video element from memory and the videos HGroup
             public function dropPlayNetStream(name:String):void {
+                Trace("Dropping play NetStream video container: "+name);
+                videoArray[name]['component'].removeChild(videoArray[name]['video']);
                 videos.removeElement(videoArray[name]['component']);
                 videoArray[name] = null;
             }
