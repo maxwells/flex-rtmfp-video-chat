@@ -18,7 +18,7 @@ package com.github.maxwells.rtmfp
         private var _groupSpecifierId:String;
         private var _groupSpecifier:GroupSpecifier;
         private var _netGroup:NetGroup;
-        private var _netStream:NetStream;
+        private var _publishNetStream:NetStream;
         private var _playNetStream:Array = new Array();
         private var _neighbors:Number = 0;
         private var Trace:Function;
@@ -113,8 +113,8 @@ package com.github.maxwells.rtmfp
             _netGroup = new NetGroup(_netConnection, _groupSpecifier.groupspecWithAuthorizations());
             _netGroup.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
             
-            _netStream = new NetStream(_netConnection, _groupSpecifier.groupspecWithAuthorizations());
-            _netStream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+            _publishNetStream = new NetStream(_netConnection, _groupSpecifier.groupspecWithAuthorizations());
+            _publishNetStream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
             
             Trace("Joined \"" + _groupSpecifier.groupspecWithAuthorizations() + "\".");
         }
@@ -130,29 +130,33 @@ package com.github.maxwells.rtmfp
         
         // Grabs audio and video and publishes them to peers
         public function publish():void {
-            _netStream.client = this;
+            _publishNetStream.client = this;
             
-            _mic = Microphone.getMicrophone();
+            _mic = Microphone.getEnhancedMicrophone();
             _camera = Camera.getCamera();
             
             if(_mic) {
                 _mic.codec = SoundCodec.SPEEX;
                 _mic.setSilenceLevel(0);
-                
-                _netStream.attachAudio(_mic);
+                _mic.framesPerPacket = 1;
+                _mic.encodeQuality = 4;
+                _publishNetStream.attachAudio(_mic);
             }
             
             if(_camera) {
                 _camera.setMode(320, 240, 10);
-                _camera.setQuality(30000, 0);
+                _camera.setQuality(14000, 0);
                 _camera.setKeyFrameInterval(15);
                 
-                _netStream.attachCamera(_camera);
+                _publishNetStream.attachCamera(_camera);
             }
             
             Trace("Publishing Stream: stream"+_username);
+            _publishNetStream.bufferTime = 0;
+            _publishNetStream.multicastAvailabilitySendToAll = true;
+            _publishNetStream.multicastWindowDuration = 0.1;
             
-            _netStream.publish("stream"+_username);
+            _publishNetStream.publish("stream"+_username);
         }
         
         // Triggered when an RMTFP neighbor publishes a stream.
@@ -160,6 +164,7 @@ package com.github.maxwells.rtmfp
         private function onNeighborPublish(streamName:String):void {
             Trace("playing NetStream: " + streamName);
             _playNetStream[streamName] = new NetStream(_netConnection, _groupSpecifier.groupspecWithAuthorizations());
+            _playNetStream[streamName].bufferTime = 0;
             _playNetStream[streamName].play(streamName);
             _addPlayNetStream(streamName, _playNetStream[streamName]);
         }
